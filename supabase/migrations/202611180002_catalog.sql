@@ -1,0 +1,19 @@
+-- Display catalog: NT$0 is a placeholder, not a free product.
+begin;
+insert into public.catalog(id,name,group_name,category,price,image,description) values('helmet','越野安全帽','人身裝備','安全帽',0,'assets/products/helmet.png','越野安全帽展示商品。用於預覽分類與商品版面，實際品牌、功能與規格將於正式選品後更新。') on conflict(id) do nothing;
+insert into public.catalog(id,name,group_name,category,price,image,description) values('goggles','越野護目鏡','人身裝備','護目鏡',0,'assets/products/goggles.png','越野護目鏡展示商品。用於預覽分類與商品版面，實際品牌、功能與規格將於正式選品後更新。') on conflict(id) do nothing;
+insert into public.catalog(id,name,group_name,category,price,image,description) values('armor','護胸護背組','人身裝備','防護護具',0,'assets/products/armor.png','護胸護背組展示商品。用於預覽分類與商品版面，實際品牌、功能與規格將於正式選品後更新。') on conflict(id) do nothing;
+insert into public.catalog(id,name,group_name,category,price,image,description) values('boots','越野車靴','人身裝備','車靴與手套',0,'assets/products/boots.png','越野車靴展示商品。用於預覽分類與商品版面，實際品牌、功能與規格將於正式選品後更新。') on conflict(id) do nothing;
+insert into public.catalog(id,name,group_name,category,price,image,description) values('wear','越野車衣','人身裝備','騎乘服飾',0,'assets/products/wear.png','越野車衣展示商品。用於預覽分類與商品版面，實際品牌、功能與規格將於正式選品後更新。') on conflict(id) do nothing;
+insert into public.catalog(id,name,group_name,category,price,image,description) values('guards','引擎下護板','改裝部品','車身防護',0,'assets/products/guards.png','引擎下護板展示商品。用於預覽分類與商品版面，實際品牌、功能與規格將於正式選品後更新。') on conflict(id) do nothing;
+insert into public.catalog(id,name,group_name,category,price,image,description) values('cockpit','越野把手','改裝部品','把手與操控',0,'assets/products/cockpit.png','越野把手展示商品。用於預覽分類與商品版面，實際品牌、功能與規格將於正式選品後更新。') on conflict(id) do nothing;
+insert into public.catalog(id,name,group_name,category,price,image,description) values('suspension','後避震器','改裝部品','懸吊系統',0,'assets/products/suspension.png','後避震器展示商品。用於預覽分類與商品版面，實際品牌、功能與規格將於正式選品後更新。') on conflict(id) do nothing;
+insert into public.catalog(id,name,group_name,category,price,image,description) values('brake','前煞車碟盤','改裝部品','煞車系統',0,'assets/products/brake.png','前煞車碟盤展示商品。用於預覽分類與商品版面，實際品牌、功能與規格將於正式選品後更新。') on conflict(id) do nothing;
+insert into public.catalog(id,name,group_name,category,price,image,description) values('drive','後齒盤','改裝部品','傳動系統',0,'assets/products/drive.png','後齒盤展示商品。用於預覽分類與商品版面，實際品牌、功能與規格將於正式選品後更新。') on conflict(id) do nothing;
+insert into public.catalog(id,name,group_name,category,price,image,description) values('wheel','越野輪胎','改裝部品','輪胎與輪組',0,'assets/products/wheel.png','越野輪胎展示商品。用於預覽分類與商品版面，實際品牌、功能與規格將於正式選品後更新。') on conflict(id) do nothing;
+insert into public.catalog(id,name,group_name,category,price,image,description) values('intake','泡棉空氣濾芯','改裝部品','進排氣系統',0,'assets/products/intake.png','泡棉空氣濾芯展示商品。用於預覽分類與商品版面，實際品牌、功能與規格將於正式選品後更新。') on conflict(id) do nothing;
+insert into public.catalog(id,name,group_name,category,price,image,description) values('electric','LED 輔助燈','改裝部品','電系與照明',0,'assets/products/electric.png','LED 輔助燈展示商品。用於預覽分類與商品版面，實際品牌、功能與規格將於正式選品後更新。') on conflict(id) do nothing;
+insert into public.catalog(id,name,group_name,category,price,image,description) values('rescue','林道拖救繩','維修與救援','拖救與隨車工具',0,'assets/products/rescue.png','林道拖救繩展示商品。用於預覽分類與商品版面，實際品牌、功能與規格將於正式選品後更新。') on conflict(id) do nothing;
+insert into public.catalog(id,name,group_name,category,price,image,description) values('care','鏈條保養組','維修與救援','保養耗材',0,'assets/products/care.png','鏈條保養組展示商品。用於預覽分類與商品版面，實際品牌、功能與規格將於正式選品後更新。') on conflict(id) do nothing;
+insert into public.catalog(id,name,group_name,category,price,image,description) values('luggage','防水尾包','車用配件','行李與補給',0,'assets/products/luggage.png','防水尾包展示商品。用於預覽分類與商品版面，實際品牌、功能與規格將於正式選品後更新。') on conflict(id) do nothing;
+commit;

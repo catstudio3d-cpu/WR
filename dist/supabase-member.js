@@ -1,0 +1,23 @@
+window.WildRideCloudMember=(()=>{
+ let client,member=null;const config=WildRideConfig;
+ const cloudError=e=>{const original=e?.message||'連線失敗';const messages={'Invalid login credentials':'Email 或密碼不正確。','Email not confirmed':'請先完成 Email 驗證再登入。','User already registered':'此 Email 已註冊，請改用登入。'};const err=Error(messages[original]||(/schema cache|does not exist|Could not find/.test(original)?'Supabase 資料表尚未完成設定，請先執行提供的 migration SQL。':original));err.status=e?.status||400;return err};
+ function db(){if(!client){if(!window.supabase?.createClient)throw Error('Supabase 套件載入失敗，請重新整理。');client=supabase.createClient(config.supabaseUrl,config.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}})}return client}
+ async function result(promise){const{data,error}=await promise;if(error)throw cloudError(error);return data}
+ const memberRedirect=()=>new URL('member.html',config.siteUrl).href;
+ async function avatarUrl(path){if(!path)return null;const data=await result(db().storage.from('avatars').createSignedUrl(path,3600));return data.signedUrl}
+ async function session(){const auth=await result(db().auth.getSession());if(!auth.session){member=null;return{member:null}}const {user}=await result(db().auth.getUser());const profile=await result(db().from('profiles').select('id,name,bike,experience,goal,avatar_path,created_at').eq('id',user.id).single());const role=await result(db().from('user_roles').select('role').eq('user_id',user.id).maybeSingle());member={id:user.id,email:user.email,name:profile.name,profile:{bike:profile.bike,experience:profile.experience,goal:profile.goal},createdAt:profile.created_at,emailVerified:!!user.email_confirmed_at,role:role?.role||'student',avatarUrl:await avatarUrl(profile.avatar_path)};return{member}}
+ async function rpc(action,data={}){return result(db().rpc('academy_request',{p_action:action,p_data:data}))}
+ async function request(path,data){try{
+  if(path==='login'){await result(db().auth.signInWithPassword({email:data.email,password:data.password}));return session()}
+  if(path==='register'){if(typeof data.password!=='string'||data.password.length<12)throw Error('密碼至少需要 12 個字元。');const r=await result(db().auth.signUp({email:data.email,password:data.password,options:{data:{name:data.name},emailRedirectTo:memberRedirect()}}));if(!r.session)return{member:null,needsConfirmation:true};return session()}
+  if(path==='logout'){await result(db().auth.signOut());member=null;return{member:null}}
+  if(path==='profile'){if(!member)await session();await result(db().from('profiles').update({name:data.name,bike:data.bike,experience:data.experience,goal:data.goal}).eq('id',member.id).select('id').single());return session()}
+  if(path==='progress')return data===undefined?rpc('progress'):rpc('progress.save',data);
+  if(path==='avatar'){if(!member)await session();if(!member)throw Error('請先登入會員。');const path=member.id+'/avatar.jpg';if(data.remove){await result(db().from('profiles').update({avatar_path:null}).eq('id',member.id).select('id').single());await result(db().storage.from('avatars').remove([path]));member.avatarUrl=null;return{avatarUrl:null}}const blob=await(await fetch(data.image)).blob();if(blob.type!=='image/jpeg'||blob.size>600000)throw Error('照片格式或大小不正確。');await result(db().storage.from('avatars').upload(path,blob,{upsert:true,contentType:'image/jpeg',cacheControl:'0'}));await result(db().from('profiles').update({avatar_path:path}).eq('id',member.id).select('id').single());member.avatarUrl=await avatarUrl(path);return{avatarUrl:member.avatarUrl}}
+  if(path==='admin/member-password'){const r=await result(db().functions.invoke('admin-member-password',{body:data}));if(r.requiresLogin){await db().auth.signOut();member=null}return r}
+  const names={'catalog':'catalog','cart':data===undefined?'cart':'cart.set','cart/merge':'cart.merge','checkout':'checkout','orders':'orders','assessments':'assessments','admin/overview':'admin.overview','admin/product':'admin.product','admin/order':'admin.order','admin/assessment':'admin.assessment','admin/issue':'admin.issue','admin/revoke':'admin.revoke'};
+  if(!names[path])throw Error('找不到此功能。');return rpc(names[path],data)
+ }catch(e){throw cloudError(e)}}
+ async function signInWithGoogle(){const r=await result(db().auth.signInWithOAuth({provider:'google',options:{redirectTo:memberRedirect(),scopes:'openid email profile'}}));return r}
+ return{session,request,signInWithGoogle,certificateUrl:id=>new URL('certificate.html?id='+encodeURIComponent(id),config.siteUrl).href,get member(){return member},mode:'supabase'}
+})();
