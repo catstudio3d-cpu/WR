@@ -1,0 +1,39 @@
+name: Deploy WildRide to GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - name: Select static website
+        id: static
+        shell: bash
+        run: |
+          if [ -f dist/index.html ]; then
+            echo "directory=dist" >> "$GITHUB_OUTPUT"
+          elif [ -f wildride-academy-site/dist/index.html ]; then
+            echo "directory=wildride-academy-site/dist" >> "$GITHUB_OUTPUT"
+          else
+            echo "Cannot find WildRide static files" >&2
+            exit 1
+          fi
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ steps.static.outputs.directory }}
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
