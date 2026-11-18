@@ -18,3 +18,6 @@
 
 /* Home curriculum: SP stands alongside the three graded courses. */
 #courses .tabs{grid-template-columns:repeat(4,minmax(0,1fr))}#courses .tabs button{font-size:27px;padding:20px 13px}#courses .tabs button span{display:block;margin-left:0;font-size:12px}#courses .tabs .course-level-emblem{width:36px;height:36px;margin-right:7px}.level-number[data-level=sp]:before{background-image:url('assets/specialties/sp.svg')}#course-panel[data-level=sp] .course-copy li:before{display:none}#course-panel[data-level=sp] .course-copy li a{display:flex;align-items:center;gap:12px}#course-panel[data-level=sp] .course-copy li a:hover{text-decoration:underline}#course-panel[data-level=sp] .course-copy li img{width:38px;height:38px;flex:0 0 38px}@media(max-width:760px){#courses .tabs{grid-template-columns:repeat(2,minmax(0,1fr))}#courses .tabs button{font-size:25px;padding:16px 13px;border-bottom:1px solid #bdc7b4}#courses .tabs button[aria-selected=true]{border-bottom:3px solid #173e2c}#courses .tabs button span{font-size:11px}#course-panel[data-level=sp] .course-copy li a{gap:10px}}
+
+/* Four course emblems in the skill-page hero. */
+.skill-hero .trail-art{max-width:360px;gap:16px;width:100%}.skill-hero .trail-art img{width:calc((100% - 48px)/4);height:auto;aspect-ratio:1;flex:0 1 auto}
