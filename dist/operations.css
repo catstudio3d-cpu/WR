@@ -4,3 +4,5 @@
 #member-operations{padding:25px 0;min-height:0}.ops-main .ops-note:empty{display:none}.ops-main .ops-form input[type=checkbox]{align-self:flex-start;width:22px;height:22px}
 
 .google-login{display:flex;align-items:center;justify-content:center;gap:14px;width:100%;padding:13px;background:#fff;border:1px solid #aebca1;color:#173e2c;cursor:pointer;font:inherit;font-weight:bold}.google-login span{font-size:13px;font-weight:normal}.auth-divider{text-align:center;font-size:11px;color:#6c785f}
+
+.admin-product-preview{width:120px;height:120px;object-fit:contain;background:#e8ecdf;justify-self:start}.ops-form #product-feedback{color:#984629}
