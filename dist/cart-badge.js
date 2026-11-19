@@ -3,9 +3,14 @@
  const links=[...document.querySelectorAll('header a[href="cart.html"]')];
  if(!links.length)return;
  const badges=links.map(link=>{
+  const icon=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  icon.setAttribute('viewBox','0 0 32 32');icon.setAttribute('class','cart-nav-icon');
+  icon.setAttribute('aria-hidden','true');icon.setAttribute('focusable','false');
+  icon.innerHTML='<path d="M3 5h4l4.2 16h14L29 10H9"/><circle cx="13" cy="27" r="1.6"/><circle cx="24" cy="27" r="1.6"/>';
   const badge=document.createElement('span');
   badge.className='cart-badge';badge.hidden=true;badge.setAttribute('aria-hidden','true');
-  link.classList.add('cart-nav-link');link.append(badge);return badge;
+  link.classList.add('cart-nav-link');link.setAttribute('aria-label','購物車');
+  link.setAttribute('title','購物車');link.replaceChildren(icon,badge);return badge;
  });
  const guestKey='wildride-cart-v1',signalKey='wildride-cart-refresh';
  let revision=0;
