@@ -10,3 +10,11 @@ header .cart-nav-link{position:relative;display:inline-flex;align-items:center;j
 .cart-nav-icon circle{fill:currentColor;stroke:none}
 .cart-badge{position:absolute;top:0;right:0;display:inline-flex;align-items:center;justify-content:center;min-width:21px;height:18px;padding:0 5px;border:1px solid #ed4938;border-radius:999px;background:#fff;color:#d72f21;font-size:12px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
 .cart-badge[hidden]{display:none}
+
+.footer-contact{width:100%;padding:8px 0 28px;border-bottom:1px solid #39503e;margin-bottom:14px}
+.footer-contact h2{font-size:24px;letter-spacing:1px;margin:0 0 18px;color:var(--paper)}
+.footer-contact address{display:grid;grid-template-columns:1fr 1.3fr;gap:12px 32px;font-style:normal;font-size:16px;color:#d4dfcb}
+.footer-contact a{width:fit-content;max-width:100%;overflow-wrap:anywhere;text-decoration:underline;text-underline-offset:4px;text-decoration-color:#77936d}
+.footer-contact a:hover{color:#f59a60}
+button:disabled{cursor:not-allowed}
+@media(max-width:760px){.footer-contact address{grid-template-columns:1fr;font-size:15px;gap:14px}}
