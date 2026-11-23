@@ -12,12 +12,12 @@ header .cart-nav-link{position:relative;display:inline-flex;align-items:center;j
 .cart-badge[hidden]{display:none}
 
 .footer-contact{width:100%;padding:8px 0 28px;border-bottom:1px solid #39503e;margin-bottom:14px}
-.footer-contact h2{font-size:24px;letter-spacing:1px;margin:0 0 18px;color:var(--paper)}
-.footer-contact address{display:grid;grid-template-columns:1fr 1.3fr;gap:12px 32px;font-style:normal;font-size:16px;color:#d4dfcb}
+.footer-contact h2{font-size:22px;letter-spacing:1px;margin:0 0 18px;color:var(--paper)}
+.footer-contact address{display:grid;grid-template-columns:1fr 1.3fr;gap:12px 32px;font-style:normal;font-size:14px;color:#d4dfcb}
 .footer-contact a{width:fit-content;max-width:100%;overflow-wrap:anywhere;text-decoration:underline;text-underline-offset:4px;text-decoration-color:#77936d}
 .footer-contact a:hover{color:#f59a60}
 button:disabled{cursor:not-allowed}
-@media(max-width:760px){.footer-contact address{grid-template-columns:1fr;font-size:15px;gap:14px}}
+@media(max-width:760px){.footer-contact address{grid-template-columns:1fr;font-size:13px;gap:14px}}
 
 .footer-bottom-contact{display:block}
 .footer-bottom-contact .footer-contact{padding:0 0 22px;margin:0;border:0}
