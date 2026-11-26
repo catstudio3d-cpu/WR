@@ -7,6 +7,6 @@ const academyRequest=WildRideMember.request.bind(WildRideMember);
 WildRideMember.request=async(path,data)=>{
  const result=await academyRequest(path,data);
  if(['login','logout','register'].includes(path))document.dispatchEvent(new Event('memberchange'));
- if(path==='checkout')document.dispatchEvent(new Event('cartchange'));
+ if(path==='checkout'||path==='payment/create')document.dispatchEvent(new Event('cartchange'));
  return result;
 };

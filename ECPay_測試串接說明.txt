@@ -1,0 +1,40 @@
+馭野騎乘學院｜綠界信用卡測試付款
+更新：2026/11/26
+
+使用方式
+1. 在 https://catstudio3d-cpu.github.io/WR/member.html 以學院管理者登入。
+2. 到馭野嚴選加入「已上架且售價大於 0」的商品；零元與未上架商品維持禁止購買。
+3. 在購物車選擇「綠界信用卡測試付款」，確認測試金額後前往綠界測試付款頁。
+4. 使用綠界官方測試信用卡，不要填入真實卡號。
+   測試卡號：4311-9522-2222-2222；安全碼：222；有效年月請依綠界測試頁說明填寫。
+   若出現測試 3D 驗證頁，依其畫面提示操作。
+5. 回到學院後查看付款紀錄。通知稍慢時可按「向綠界查詢測試結果」；每筆交易每 30 秒最多查詢一次。
+6. 會員中心可查看「測試付款完成（未實際收款）」；後台的訂單頁也會顯示測試付款狀態。
+
+測試範圍
+本版僅管理者可以建立與查詢綠界測試交易；一般會員保留原詢價／預約流程。
+測試款項不會實際扣款，不扣庫存、不自動出貨、不自動確認報名、不自動核發證書。
+測試訂單建立後會清空購物車；若中途關閉付款頁，可至會員中心查看待確認紀錄。
+每位管理者每小時最多建立 20 筆測試訂單，單筆金額 NT$1–200,000。
+付款方式為信用卡一次付清；未開通 ATM、超商、分期、退款與電子發票。
+本版固定綠界公開測試商店 3002607，不能透過前端改成正式環境。
+
+後端與資料
+Supabase Edge Functions：ecpay-checkout、ecpay-notify、ecpay-return。
+付款通知網址：https://fyqlfldjoaikmxowmrfi.supabase.co/functions/v1/ecpay-notify
+付款返回網址：https://fyqlfldjoaikmxowmrfi.supabase.co/functions/v1/ecpay-return
+新資料表：ecpay_transactions、ecpay_events；既有 orders 新增付款狀態與環境欄位。
+後端依資料庫商品價格計算金額。通知驗證檢查碼、商店、訂單與金額，並向綠界查詢成功後才記為 test_paid。
+瀏覽器返回頁不會自行改變付款狀態。模擬通知另外標示 simulated。
+正式金鑰未加入網站，也未加入這次程式。
+
+轉正式收款前
+需另行完成正式環境配置、商店密鑰後端設定、正式交易與對帳驗收、庫存與報名名額處理、退款與交易條款。
+不要直接將目前測試網址或測試帳號替換後就對外收費。
+
+規格來源
+https://github.com/ECPay/ecpay-api-skill
+https://developers.ecpay.com.tw/2866/
+https://developers.ecpay.com.tw/2878/
+https://developers.ecpay.com.tw/2890/
+https://developers.ecpay.com.tw/2902/
