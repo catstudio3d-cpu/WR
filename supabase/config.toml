@@ -8,3 +8,6 @@ verify_jwt = false
 verify_jwt = false
 [functions.ecpay-return]
 verify_jwt = false
+
+[functions.ecpay-info]
+verify_jwt = false

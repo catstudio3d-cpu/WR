@@ -1,4 +1,4 @@
-import {lookup,apply,matches,reconcile} from '../_shared/ecpay-runtime.ts';
+import {lookup,apply,matches,reconcile,saveInfo} from '../_shared/ecpay-runtime.ts';
 import {parseForm,verifyMac} from '../_shared/ecpay.mjs';
 // 公開付款通知入口：以 CheckMacValue、商店／訂單／金額與綠界主動查詢驗證。
 Deno.serve(async request=>{
@@ -12,6 +12,7 @@ Deno.serve(async request=>{
   const transaction=await lookup(params.MerchantTradeNo||'');
   if(!matches(transaction,params))return reply('0|Invalid transaction',400);
   if(transaction.status==='test_paid')return reply('1|OK');
+  if(params.RtnCode==='2'||params.RtnCode==='10100073'){await saveInfo(transaction,params);return reply('1|OK')}
   if(params.SimulatePaid==='1'){await apply(transaction,params,'notify','simulated');return reply('1|OK')}
   const status=params.RtnCode==='1'||params.RtnCode==='10300066'?'pending':'failed';
   await apply(transaction,params,'notify',status);

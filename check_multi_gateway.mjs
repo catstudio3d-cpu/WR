@@ -1,0 +1,6 @@
+import {checkoutParams,STAGE,METHODS} from './supabase/functions/_shared/ecpay.mjs';import fs from 'node:fs';import assert from 'node:assert/strict';
+for(const method of Object.keys(METHODS)){
+ const params=await checkoutParams({environment:'stage',merchant_id:STAGE.merchantId,amount:100,method,merchant_trade_no:'WR'+crypto.randomUUID().replaceAll('-','').slice(0,18),order_id:crypto.randomUUID(),created_at:Math.floor(Date.now()/1000)},'https://fyqlfldjoaikmxowmrfi.supabase.co/functions/v1','https://catstudio3d-cpu.github.io/WR/');
+ const response=await fetch(STAGE.gateway,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(params),signal:AbortSignal.timeout(15000)});
+ const html=await response.text();fs.writeFileSync('.cloud-validation/gateway-'+method+'.html',html);assert.equal(response.status,200);assert(/選擇支付方式/.test(html),'Gateway rejected '+method);assert(!/CheckMacValue.*(?:Error|錯誤)|檢查碼.*錯誤/i.test(html));console.log(method+': stage checkout page accepted; no payment submitted');
+}

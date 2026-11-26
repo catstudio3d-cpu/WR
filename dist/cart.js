@@ -1,4 +1,6 @@
-const shop=WildRideShop,api=WildRideMember,$=id=>document.getElementById(id);let requestKey=crypto.randomUUID(),paymentReady=false,needsRegistration=false;
+const shop=WildRideShop,api=WildRideMember,$=id=>document.getElementById(id);let requestKey=crypto.randomUUID(),paymentReady=false,needsRegistration=false,paymentLimits={},supportedMethods=[];
+const chosenMethod=()=>document.querySelector('input[name="payment-method"]:checked')?.value;
+const mobileWebATM=()=>/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 const available=p=>p.active!==false&&Number(p.price)>0;
 const isRegistration=p=>['課程類','活動類'].includes(p.group);
 function say(text,error=false){$('ops-status').textContent=text;$('ops-status').classList.toggle('error',error)}
@@ -16,27 +18,31 @@ async function render(){
  }
  if(!items.length)host.append(el('p','購物車還沒有商品，先到馭野嚴選看看。'));
  $('cart-total').textContent='商品合計 NT$'+items.reduce((n,p)=>n+p.price*p.quantity,0).toLocaleString();
+ const total=items.reduce((n,p)=>n+p.price*p.quantity,0);
+ for(const radio of document.querySelectorAll('input[name="payment-method"]')){const limit=paymentLimits[radio.value];radio.disabled=!paymentReady||!supportedMethods.includes(radio.value)||!limit||total<limit.min||total>limit.max||(radio.value==='WebATM'&&mobileWebATM());radio.closest('label').style.opacity=radio.disabled?'.5':'1'}
+ const selected=document.querySelector('input[name="payment-method"]:checked');if(selected?.disabled){selected.checked=false;const next=document.querySelector('input[name="payment-method"]:not(:disabled)');if(next)next.checked=true}
  $('registration-fields').hidden=!needsRegistration;
  for(const name of ['name','phone','bike']){$('registration-'+name).required=needsRegistration;$('registration-'+name).disabled=!needsRegistration}
  if(shop.member){if(!$('registration-name').value)$('registration-name').value=shop.member.name||'';if(!$('registration-bike').value)$('registration-bike').value=shop.member.profile?.bike||''}
- $('checkout').disabled=!items.length||!shop.member||!paymentReady||items.some(p=>!available(p)||(isRegistration(p)&&p.quantity!==1));
- $('checkout').textContent=!shop.member?'請先登入會員':paymentReady?'前往綠界測試付款':'線上付款尚未開放';
+ $('checkout').disabled=!items.length||!shop.member||!paymentReady||!chosenMethod()||items.some(p=>!available(p)||(isRegistration(p)&&p.quantity!==1));
+ $('checkout').textContent=!shop.member?'請先登入會員':paymentReady?(['ATM','CVS','BARCODE'].includes(chosenMethod())?'前往綠界測試取號':'前往綠界測試付款'):'線上付款尚未開放';
  $('merge-guest').hidden=!shop.member||!shop.hasGuest();$('cart-auth').hidden=!!shop.member;
 }
 function registration(){return Object.fromEntries(['name','phone','bike'].map(k=>[k,$('registration-'+k).value.trim()]))}
 function validateRegistration(){if(!needsRegistration)return{};const r=registration();if(!r.name||!r.bike||!/^\+?[0-9]{8,15}$/.test(r.phone.replace(/[ ()-]/g,'')))throw Error('請填寫報名姓名、有效手機與自備車款。');return r}
 for(const id of ['registration-name','registration-phone','registration-bike','order-note'])$(id).addEventListener('input',()=>{requestKey=crypto.randomUUID()});
 let submitting=false;
+$('payment-options').addEventListener('change',()=>{requestKey=crypto.randomUUID();act(render)});
 $('merge-guest').onclick=()=>act(async()=>{await shop.merge();requestKey=crypto.randomUUID();await render();say('訪客購物車已合併至目前會員。')});
 $('checkout-form').onsubmit=e=>{
  e.preventDefault();if(submitting)return;submitting=true;$('checkout').disabled=true;
  act(async()=>{try{
   if(!paymentReady||!shop.member)throw Error('目前尚未開放此帳號進行付款。');
   const current=await shop.items();if(!current.length||current.some(p=>!available(p)||(isRegistration(p)&&p.quantity!==1)))throw Error('請確認商品已上架；課程與活動每項數量需為 1。');
-  const payment=await api.request('payment/create',{requestKey,note:$('order-note').value,registration:validateRegistration()});WildRidePayment.submit(payment);
+  const method=chosenMethod();if(!method)throw Error('請選擇適用的付款方式。');const payment=await api.request('payment/create',{requestKey,note:$('order-note').value,registration:validateRegistration(),method});WildRidePayment.submit(payment);
  }finally{submitting=false;await render()}});
 };
 shop.init().then(async()=>{
- try{const config=await WildRidePayment.config();paymentReady=config.enabled&&config.environment==='stage'&&shop.member?.role==='admin';$('payment-availability').textContent=paymentReady?'管理者測試環境：請使用綠界測試卡，不代表正式繳費或報名完成。':'目前僅開放管理者測試；一般會員線上付款與正式報名籌備中。'}catch{$('payment-availability').textContent='付款服務暫時無法使用，請稍後再試。'}
+ try{const config=await WildRidePayment.config();paymentLimits=config.limits||{};supportedMethods=config.methods||[];paymentReady=config.enabled&&config.environment==='stage'&&shop.member?.role==='admin';$('payment-availability').textContent=paymentReady?'管理者測試環境：勿使用真實信用卡，也不要實際轉帳或到超商繳費。取號不代表付款或報名完成。':'目前僅開放管理者測試；一般會員線上付款與正式報名籌備中。'}catch{$('payment-availability').textContent='付款服務暫時無法使用，請稍後再試。'}
  await render();
 }).catch(e=>say(e.message,true));
