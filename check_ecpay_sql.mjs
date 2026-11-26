@@ -10,7 +10,9 @@ const product=(await db.query('select id from public.catalog where price=300')).
 async function create(user,key='payment-test-key-001'){return(await db.query("select public.academy_ecpay_stage_create($1,$2,'test') as r",[user,key])).rows[0].r}
 await assert.rejects(create(student));await assert.rejects(create(admin));
 await db.query('insert into public.cart values($1,$2,2)',[admin,product]);
+await db.exec('set role service_role');assert.equal((await db.query('select role from public.user_roles where user_id=$1',[admin])).rows[0].role,'admin');
 const created=await create(admin);assert.equal(created.order.total,600);assert.equal(created.payment.environment,'stage');assert.equal(created.payment.merchant_trade_no.length,20);assert.equal((await create(admin)).order.id,created.order.id);
+await db.exec('reset role');
 assert.equal((await db.query('select stock from public.catalog where id=$1',[product])).rows[0].stock,5);
 assert.equal((await db.query('select count(*)::int as n from public.cart where user_id=$1',[admin])).rows[0].n,0);
 let event=0;
