@@ -1,0 +1,42 @@
+馭野騎乘學院｜正式收款配置
+更新：2026/11/27
+
+收款商店：3096502
+官網：https://catstudio3d-cpu.github.io/WR/
+結帳：https://catstudio3d-cpu.github.io/WR/cart.html
+正式網關：https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5
+
+付款方式
+信用卡一次付清、ATM 虛擬帳號、WebATM、超商代碼、超商條碼。
+WebATM 需電腦及讀卡機；目前綠界商店僅支援國內信用卡。
+
+密鑰
+Supabase 專案 fyqlfldjoaikmxowmrfi 的 Edge Functions > Secrets：
+ECPAY_MERCHANT_ID、ECPAY_HASH_KEY、ECPAY_HASH_IV。
+密鑰不在前端、公開儲存庫或本文件中。正式配置不完整時會停用新付款。
+
+正式訂單流程
+登入會員後購買已上架、非展示、售價大於零且庫存足夠的商品。
+後端讀取真實售價；建立訂單時保留庫存／名額，避免超賣。
+課程／活動每項數量為一，需填報名姓名、手機與自備車款。
+同一會員同項課程／活動已有待付款或已繳費訂單時，不再重複建立。
+付款通知檢查簽章、商店、訂單與金額，並主動查詢綠界確認成功，才記為 paid。
+取號、瀏覽器返回頁及模擬通知均不能標記已繳費。
+正式付款列入後台正式報名名單，舊 stage/test_paid 保留且分開顯示。
+
+營運限制與人工處理
+尚未串接退款 API、電子發票及自動出貨；取消不等於退款。
+待付款訂單保留的庫存／名額目前不自動釋放。請每日核對待付款交易；
+付款中斷、失敗、逾期或需取消者，先聯絡學院核對綠界實際交易，再安排後續處理。
+系統禁止直接取消未確認收款的正式訂單，以免仍有效的 ATM／超商繳費單被付款後超賣。
+已付款訂單取消前，學院應另外完成退款核對；庫存回補與退款是不同動作。
+實體商品配送資料目前需由學院另外聯絡確認。
+
+驗收
+已提供本機生產環境測試，涵蓋計價、庫存、必要資料、重複訂單、權限、簽章與名單分流。
+本次不代替商家操作真實扣款。正式交易仍需商家完成一筆付款，核對綠界、會員訂單及後台名單。
+
+付款通知：https://fyqlfldjoaikmxowmrfi.supabase.co/functions/v1/ecpay-notify
+取號通知：https://fyqlfldjoaikmxowmrfi.supabase.co/functions/v1/ecpay-info
+返回橋接：https://fyqlfldjoaikmxowmrfi.supabase.co/functions/v1/ecpay-return
+各通知 URL 由後端送給綠界，GitHub Pages 不負責處理 POST 通知。

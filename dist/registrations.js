@@ -14,7 +14,7 @@ window.WildRideRegistrations=(()=>{
    if(!visible.length){body.append(node('p',mode.value==='test'?'目前沒有已完成測試付款的報名紀錄。':'目前沒有正式已繳費的報名紀錄。'));return}
    const table=node('table'),thead=node('thead'),head=node('tr');for(const[,label]of columns){const th=node('th',label);th.scope='col';head.append(th)}thead.append(head);const tbody=node('tbody');for(const r of visible){const tr=node('tr');for(const[key]of columns)tr.append(node('td',cell(r,key)));tbody.append(tr)}table.append(thead,tbody);body.append(table);
   }
-  async function load(){const id=++loading;all=[];draw();download.disabled=true;status.textContent='正在讀取報名紀錄…';refresh.disabled=true;try{const result=await WildRideMember.request('admin/registrations',{kind,test:mode.value==='test'});if(serial!==active||id!==loading)return;all=result.rows;status.textContent=mode.value==='test'?'測試付款資料，不代表正式繳費或報名。舊訂單未填寫的欄位標示為「資料待補」。':'只列出已確認的正式付款。現在金流仍為測試環境，測試交易不會列入。';draw()}catch(e){if(serial===active&&id===loading)status.textContent=e.message}finally{if(id===loading)refresh.disabled=false}}
+  async function load(){const id=++loading;all=[];draw();download.disabled=true;status.textContent='正在讀取報名紀錄…';refresh.disabled=true;try{const result=await WildRideMember.request('admin/registrations',{kind,test:mode.value==='test'});if(serial!==active||id!==loading)return;all=result.rows;status.textContent=mode.value==='test'?'測試付款資料，不代表正式繳費或報名。舊訂單未填寫的欄位標示為「資料待補」。':'只列出已確認的正式付款；測試交易不會列入。';draw()}catch(e){if(serial===active&&id===loading)status.textContent=e.message}finally{if(id===loading)refresh.disabled=false}}
   mode.onchange=load;refresh.onclick=load;search.oninput=draw;download.onclick=()=>exportCsv(visible,kind,mode.value==='test');await load();
  }
  return{render,csvCell};

@@ -1,5 +1,5 @@
 // AIO 規格來源：https://developers.ecpay.com.tw/2866/、2878/、2890/、2902/
-// 本版僅支援公開測試帳號；不接受前端切換正式環境。
+// 正式密鑰僅由後端環境變數提供；不接受前端切換商店。
 export const STAGE = Object.freeze({merchantId:'3002607',hashKey:'pwFHCqoQZGmho4w6',hashIV:'EkRm7iFT261dpevs',gateway:'https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5',query:'https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5'});
 export const METHODS=Object.freeze({Credit:{name:'信用卡一次付清',min:6,max:200000},ATM:{name:'ATM 虛擬帳號',min:16,max:49999},WebATM:{name:'WebATM 網路轉帳',min:16,max:49999},CVS:{name:'超商代碼',min:34,max:6000},BARCODE:{name:'超商條碼',min:18,max:20000}});
 export async function sha256(text){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text))),b=>b.toString(16).padStart(2,'0')).join('')}
@@ -10,7 +10,7 @@ export async function checkMac(params,key=STAGE.hashKey,iv=STAGE.hashIV){
  return (await sha256(ecpayEncode(source))).toUpperCase();
 }
 export function safeEqual(a,b){if(typeof a!=='string'||typeof b!=='string'||a.length!==b.length)return false;let difference=0;for(let i=0;i<a.length;i++)difference|=a.charCodeAt(i)^b.charCodeAt(i);return difference===0}
-export async function verifyMac(params){return /^[A-Fa-f0-9]{64}$/.test(params.CheckMacValue||'')&&safeEqual(await checkMac(params),params.CheckMacValue.toUpperCase())}
+export async function verifyMac(params,key=STAGE.hashKey,iv=STAGE.hashIV){return /^[A-Fa-f0-9]{64}$/.test(params.CheckMacValue||'')&&safeEqual(await checkMac(params,key,iv),params.CheckMacValue.toUpperCase())}
 export function parseForm(body){
  if(new TextEncoder().encode(body).length>32768)throw Error('通知內容過大。');
  const params={},seen=new Set();
@@ -22,12 +22,12 @@ export function tradeDate(seconds){
  const get=type=>parts.find(p=>p.type===type).value;
  return get('year')+'/'+get('month')+'/'+get('day')+' '+get('hour')+':'+get('minute')+':'+get('second');
 }
-export async function checkoutParams(payment,baseUrl,siteUrl){
- if(payment.environment!=='stage'||payment.merchant_id!==STAGE.merchantId||!Number.isSafeInteger(Number(payment.amount))||payment.amount<1||payment.amount>200000)throw Error('測試交易設定不正確。');
- const method=payment.method||'Credit',limit=METHODS[method];if(!limit||payment.amount<limit.min||payment.amount>limit.max)throw Error('訂單金額不適用此付款方式。');
- const params={MerchantID:STAGE.merchantId,MerchantTradeNo:payment.merchant_trade_no,MerchantTradeDate:tradeDate(payment.created_at),PaymentType:'aio',TotalAmount:String(payment.amount),TradeDesc:'WR學院測試付款',ItemName:'馭野學院測試訂單',ReturnURL:baseUrl+'/ecpay-notify',ChoosePayment:method,EncryptType:'1',ClientBackURL:siteUrl+'payment-result.html?order='+payment.order_id};
+export async function checkoutParams(payment,baseUrl,siteUrl,config=STAGE){
+ if(payment.environment!==(config===STAGE?'stage':'production')||payment.merchant_id!==config.merchantId||!Number.isSafeInteger(Number(payment.amount))||payment.amount<1||payment.amount>200000)throw Error('交易設定不正確。');
+ const method=payment.method||'Credit',limit=Object.hasOwn(METHODS,method)?METHODS[method]:null;if(!limit||payment.amount<limit.min||payment.amount>limit.max)throw Error('訂單金額不適用此付款方式。');
+ const params={MerchantID:config.merchantId,MerchantTradeNo:payment.merchant_trade_no,MerchantTradeDate:tradeDate(payment.created_at),PaymentType:'aio',TotalAmount:String(payment.amount),TradeDesc:config===STAGE?'WR學院測試付款':'馭野騎乘學院線上付款',ItemName:config===STAGE?'馭野學院測試訂單':(payment.item_name||'馭野騎乘學院訂單'),ReturnURL:baseUrl+'/ecpay-notify',ChoosePayment:method,EncryptType:'1',ClientBackURL:siteUrl+'payment-result.html?order='+payment.order_id};
  if(['ATM','CVS','BARCODE'].includes(method)){params.PaymentInfoURL=baseUrl+'/ecpay-info';params.ClientRedirectURL=baseUrl+'/ecpay-return';if(method==='ATM')params.ExpireDate='3';else params.StoreExpireDate=method==='CVS'?'4320':'3'}else{params.OrderResultURL=baseUrl+'/ecpay-return';if(method==='Credit')params.Redeem='N'}
- params.CheckMacValue=await checkMac(params);return params;
+ params.CheckMacValue=await checkMac(params,config.hashKey,config.hashIV);return params;
 }
 export async function fingerprint(params,source){return sha256(source+'|'+Object.keys(params).sort().map(k=>k+'='+params[k]).join('&'))}
 export function expirySeconds(value){

@@ -1,7 +1,7 @@
-const shop=WildRideShop,api=WildRideMember,$=id=>document.getElementById(id);let requestKey=crypto.randomUUID(),paymentReady=false,needsRegistration=false,paymentLimits={},supportedMethods=[];
+const shop=WildRideShop,api=WildRideMember,$=id=>document.getElementById(id);let requestKey=crypto.randomUUID(),paymentReady=false,needsRegistration=false,paymentLimits={},supportedMethods=[],paymentEnvironment='production';
 const chosenMethod=()=>document.querySelector('input[name="payment-method"]:checked')?.value;
 const mobileWebATM=()=>/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-const available=p=>p.active!==false&&Number(p.price)>0;
+const available=p=>p.active!==false&&p.demo===false&&Number(p.price)>0&&Number.isInteger(p.stock)&&p.stock>=p.quantity;
 const isRegistration=p=>['課程類','活動類'].includes(p.group);
 function say(text,error=false){$('ops-status').textContent=text;$('ops-status').classList.toggle('error',error)}
 function el(tag,text,cls){const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e}
@@ -10,7 +10,7 @@ async function render(){
  const items=await shop.items(),host=$('cart-items');host.replaceChildren();needsRegistration=items.some(isRegistration);
  for(const p of items){
   const row=el('article',null,'ops-row'),img=el('img');img.src=p.image;img.alt=p.name;
-  const body=el('div',null,'grow');body.append(el('b',p.name),el('small',available(p)?'NT$'+p.price.toLocaleString():'未上架，請移除後再結帳'));
+  const body=el('div',null,'grow');body.append(el('b',p.name),el('small',available(p)?'NT$'+p.price.toLocaleString():'未開放購買或名額／庫存不足，請移除後再結帳'));
   if(isRegistration(p))body.append(el('small','每個會員限報名一位，數量請設為 1。'));
   const qty=el('input');qty.type='number';qty.min=1;qty.max=isRegistration(p)?1:20;qty.value=p.quantity;qty.disabled=!available(p);qty.setAttribute('aria-label',p.name+'數量');
   qty.onchange=()=>act(async()=>{const n=Number(qty.value);if(!Number.isInteger(n)||n<1||n>Number(qty.max))throw Error(isRegistration(p)?'課程與活動數量需為 1。':'數量需為 1–20。');await shop.set(p.id,n);requestKey=crypto.randomUUID();await render()});
@@ -25,7 +25,7 @@ async function render(){
  for(const name of ['name','phone','bike']){$('registration-'+name).required=needsRegistration;$('registration-'+name).disabled=!needsRegistration}
  if(shop.member){if(!$('registration-name').value)$('registration-name').value=shop.member.name||'';if(!$('registration-bike').value)$('registration-bike').value=shop.member.profile?.bike||''}
  $('checkout').disabled=!items.length||!shop.member||!paymentReady||!chosenMethod()||items.some(p=>!available(p)||(isRegistration(p)&&p.quantity!==1));
- $('checkout').textContent=!shop.member?'請先登入會員':paymentReady?(['ATM','CVS','BARCODE'].includes(chosenMethod())?'前往綠界測試取號':'前往綠界測試付款'):'線上付款尚未開放';
+ $('checkout').textContent=!shop.member?'請先登入會員':paymentReady?(['ATM','CVS','BARCODE'].includes(chosenMethod())?'前往綠界取得繳費資訊':'前往綠界付款'):'線上付款尚未開放';
  $('merge-guest').hidden=!shop.member||!shop.hasGuest();$('cart-auth').hidden=!!shop.member;
 }
 function registration(){return Object.fromEntries(['name','phone','bike'].map(k=>[k,$('registration-'+k).value.trim()]))}
@@ -43,6 +43,6 @@ $('checkout-form').onsubmit=e=>{
  }finally{submitting=false;await render()}});
 };
 shop.init().then(async()=>{
- try{const config=await WildRidePayment.config();paymentLimits=config.limits||{};supportedMethods=config.methods||[];paymentReady=config.enabled&&config.environment==='stage'&&shop.member?.role==='admin';$('payment-availability').textContent=paymentReady?'管理者測試環境：勿使用真實信用卡，也不要實際轉帳或到超商繳費。取號不代表付款或報名完成。':'目前僅開放管理者測試；一般會員線上付款與正式報名籌備中。'}catch{$('payment-availability').textContent='付款服務暫時無法使用，請稍後再試。'}
+ try{const config=await WildRidePayment.config();paymentLimits=config.limits||{};supportedMethods=config.methods||[];paymentEnvironment=config.environment;paymentReady=config.enabled&&config.environment==='production'&&!!shop.member&&(!config.adminOnly||shop.member.role==='admin');$('payment-availability').textContent=paymentReady?'正式付款：完成付款後請回會員中心確認紀錄。ATM 與超商取號不代表已繳費。':'請登入會員後進行付款；若服務暫停，請聯絡學院。'}catch{$('payment-availability').textContent='付款服務暫時無法使用，請稍後再試。'}
  await render();
 }).catch(e=>say(e.message,true));
