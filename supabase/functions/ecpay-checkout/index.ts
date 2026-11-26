@@ -20,7 +20,7 @@ Deno.serve(async request=>{
   if(role?.role!=='admin')return reply({error:'綠界測試付款僅供學院管理者使用。'},403);
   if(action==='create'){
    if(typeof body.requestKey!=='string'||!/^[A-Za-z0-9-]{16,80}$/.test(body.requestKey)||typeof(body.note??'')!=='string'||(body.note||'').length>500)return reply({error:'訂單資料不正確。'},400);
-   const created=await result(service.rpc('academy_ecpay_stage_create',{p_user:auth.user.id,p_request_key:body.requestKey,p_note:body.note||''}));
+   const created=await result(service.rpc('academy_ecpay_stage_register',{p_user:auth.user.id,p_request_key:body.requestKey,p_note:body.note||'',p_registration:body.registration||{}}));
    if(created.payment.status!=='pending')return reply({error:'此測試訂單已處理，請至會員中心查看。'},409);
    if(Math.floor(Date.now()/1000)-created.payment.created_at>600)return reply({error:'付款頁已逾時，請至會員中心查詢測試訂單。'},409);
    return reply({order:created.order,environment:'stage',gateway:STAGE.gateway,params:await checkoutParams(created.payment,projectUrl+'/functions/v1',siteUrl)});

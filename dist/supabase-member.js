@@ -20,9 +20,11 @@ window.WildRideCloudMember=(()=>{
    if(paymentError){let message='付款服務暫時無法使用。';try{message=(await paymentError.context.json()).error||message}catch{}throw Error(message)}
    return payment;
   }
+  if(path==='admin/registrations')return result(db().rpc('academy_paid_registrations',{p_kind:data.kind,p_test:data.test===true}));
   const names={'catalog':'catalog','cart':data===undefined?'cart':'cart.set','cart/merge':'cart.merge','checkout':'checkout','orders':'orders','assessments':'assessments','admin/overview':'admin.overview','admin/product':'admin.product','admin/product-create':'admin.product-create','admin/order':'admin.order','admin/assessment':'admin.assessment','admin/issue':'admin.issue','admin/revoke':'admin.revoke'};
   if(!names[path])throw Error('找不到此功能。');return rpc(names[path],data)
  }catch(e){throw cloudError(e)}}
  async function signInWithGoogle(){const r=await result(db().auth.signInWithOAuth({provider:'google',options:{redirectTo:memberRedirect(),scopes:'openid email profile'}}));return r}
  return{session,request,signInWithGoogle,certificateUrl:id=>new URL('certificate.html?id='+encodeURIComponent(id),config.siteUrl).href,get member(){return member},mode:'supabase'}
 })();
+
