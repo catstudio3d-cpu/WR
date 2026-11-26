@@ -14,6 +14,13 @@ window.WildRideCloudMember=(()=>{
   if(path==='profile'){if(!member)await session();await result(db().from('profiles').update({name:data.name,bike:data.bike,experience:data.experience,goal:data.goal}).eq('id',member.id).select('id').single());return session()}
   if(path==='progress')return data===undefined?rpc('progress'):rpc('progress.save',data);
   if(path==='avatar'){if(!member)await session();if(!member)throw Error('請先登入會員。');const path=member.id+'/avatar.jpg';if(data.remove){await result(db().from('profiles').update({avatar_path:null}).eq('id',member.id).select('id').single());await result(db().storage.from('avatars').remove([path]));member.avatarUrl=null;return{avatarUrl:null}}const blob=await(await fetch(data.image)).blob();if(blob.type!=='image/jpeg'||blob.size>600000)throw Error('照片格式或大小不正確。');await result(db().storage.from('avatars').upload(path,blob,{upsert:true,contentType:'image/jpeg',cacheControl:'0'}));await result(db().from('profiles').update({avatar_path:path}).eq('id',member.id).select('id').single());member.avatarUrl=await avatarUrl(path);return{avatarUrl:member.avatarUrl}}
+  if(path==='admin/product-image'){
+   if(!member)await session();if(member?.role!=='admin')throw Error('僅管理者可上傳商品圖片。');
+   if(typeof data?.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(data.image)||data.image.length>1600000)throw Error('圖片格式或大小不正確。');
+   const blob=await(await fetch(data.image)).blob();if(blob.size>1200000||blob.type!=='image/jpeg')throw Error('圖片格式或大小不正確。');
+   const path='products/'+crypto.randomUUID()+'.jpg';await result(db().storage.from('product-images').upload(path,blob,{upsert:false,contentType:'image/jpeg',cacheControl:'31536000'}));
+   return{image:db().storage.from('product-images').getPublicUrl(path).data.publicUrl};
+  }
   if(path==='admin/member-password'){const r=await result(db().functions.invoke('admin-member-password',{body:data}));if(r.requiresLogin){await db().auth.signOut();member=null}return r}
   if(path.startsWith('payment/')){
    const {data:payment,error:paymentError}=await db().functions.invoke('ecpay-checkout',{body:{...data,action:path.split('/')[1]}});
