@@ -43,3 +43,21 @@ export async function reconcile(transaction:any){
  }
  return updated;
 }
+// Destructive order operations require a fresh, signed provider lookup, never browser claims.
+export async function verifyUnpaid(transaction:any){
+ if(['paid','test_paid'].includes(transaction.status))throw Error('此訂單已付款，不可直接刪除。');
+ const config=configuration(transaction.environment),now=Math.floor(Date.now()/1000);
+ const params:Record<string,string>={MerchantID:config.merchantId,MerchantTradeNo:transaction.merchant_trade_no,TimeStamp:String(now)};
+ params.CheckMacValue=await checkMac(params,config.hashKey,config.hashIV);
+ const response=await fetch(config.query,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(params),signal:AbortSignal.timeout(8000)});
+ if(!response.ok)throw Error('綠界查核暫時無法完成，訂單尚未刪除。');
+ const answer=parseForm(await response.text());
+ if(!await signature(transaction,answer)||!matches(transaction,answer))throw Error('無法確認綠界交易狀態，訂單尚未刪除，請稍後重試或聯絡學院。');
+ if(answer.TradeStatus==='1'&&answer.SimulatePaid!=='1'){
+  await apply(transaction,answer,'query',transaction.environment==='production'?'paid':'test_paid',true);
+  throw Error('已確認此訂單付款成功，不能刪除或釋放名額。');
+ }
+ if(!['0','10200095'].includes(answer.TradeStatus))throw Error('綠界交易狀態尚待確認，訂單尚未刪除。');
+ await apply(transaction,answer,'query',answer.TradeStatus==='0'?'pending':'failed');
+ return{verification:answer.TradeStatus==='0'?'unpaid':'not_created',checkedAt:Math.floor(Date.now()/1000)};
+}
