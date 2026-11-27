@@ -2,6 +2,7 @@ const shop=WildRideShop,api=WildRideMember,$=id=>document.getElementById(id);let
 const chosenMethod=()=>document.querySelector('input[name="payment-method"]:checked')?.value;
 const mobileWebATM=()=>/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 const available=p=>p.active!==false&&p.demo===false&&Number(p.price)>0&&Number.isInteger(p.stock)&&p.stock>=p.quantity;
+const quantityMax=p=>Math.min(Number.isInteger(p.stock)?p.stock:1000000,p.max_per_order||1000000);
 const isRegistration=p=>['課程類','活動類'].includes(p.group);
 function say(text,error=false){$('ops-status').textContent=text;$('ops-status').classList.toggle('error',error)}
 function el(tag,text,cls){const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e}
@@ -11,9 +12,9 @@ async function render(){
  for(const p of items){
   const row=el('article',null,'ops-row'),img=el('img');img.src=p.image;img.alt=p.name;
   const body=el('div',null,'grow');body.append(el('b',p.name),el('small',available(p)?'NT$'+p.price.toLocaleString():'未開放購買或名額／庫存不足，請移除後再結帳'));
-  if(isRegistration(p))body.append(el('small','每個會員限報名一位，數量請設為 1。'));
-  const qty=el('input');qty.type='number';qty.min=1;qty.max=isRegistration(p)?1:20;qty.value=p.quantity;qty.disabled=!available(p);qty.setAttribute('aria-label',p.name+'數量');
-  qty.onchange=()=>act(async()=>{const n=Number(qty.value);if(!Number.isInteger(n)||n<1||n>Number(qty.max))throw Error(isRegistration(p)?'課程與活動數量需為 1。':'數量需為 1–20。');await shop.set(p.id,n);requestKey=crypto.randomUUID();await render()});
+  body.append(el('small',(isRegistration(p)?'報名人數':'購買數量')+'可自行調整；'+(p.max_per_order?'每筆最多 '+p.max_per_order+(isRegistration(p)?' 人。':' 件。'):'本商品未另設每筆上限，以剩餘名額／庫存為準。')));
+  const qty=el('input');qty.type='number';qty.min=1;qty.max=quantityMax(p);qty.value=p.quantity;qty.disabled=!available(p);qty.setAttribute('aria-label',p.name+'數量');
+  qty.onchange=()=>act(async()=>{try{const n=Number(qty.value);if(!Number.isInteger(n)||n<1||n>Number(qty.max))throw Error('請填寫 1–'+quantityMax(p)+' 的整數，並確認剩餘名額／庫存。');await shop.set(p.id,n);requestKey=crypto.randomUUID();await render()}catch(error){qty.value=p.quantity;throw error}});
   const remove=el('button','移除');remove.onclick=()=>act(async()=>{await shop.set(p.id,0);requestKey=crypto.randomUUID();await render()});row.append(img,body,qty,remove);host.append(row);
  }
  if(!items.length)host.append(el('p','購物車還沒有商品，先到馭野嚴選看看。'));
@@ -24,7 +25,7 @@ async function render(){
  $('registration-fields').hidden=!needsRegistration;
  for(const name of ['name','phone','bike']){$('registration-'+name).required=needsRegistration;$('registration-'+name).disabled=!needsRegistration}
  if(shop.member){if(!$('registration-name').value)$('registration-name').value=shop.member.name||'';if(!$('registration-bike').value)$('registration-bike').value=shop.member.profile?.bike||''}
- $('checkout').disabled=!items.length||!shop.member||!paymentReady||!chosenMethod()||items.some(p=>!available(p)||(isRegistration(p)&&p.quantity!==1));
+ $('checkout').disabled=!items.length||!shop.member||!paymentReady||!chosenMethod()||items.some(p=>!available(p)||p.quantity>quantityMax(p));
  $('checkout').textContent=!shop.member?'請先登入會員':paymentReady?(['ATM','CVS','BARCODE'].includes(chosenMethod())?'前往綠界取得繳費資訊':'前往綠界付款'):'線上付款尚未開放';
  $('merge-guest').hidden=!shop.member||!shop.hasGuest();$('cart-auth').hidden=!!shop.member;
 }
@@ -38,7 +39,7 @@ $('checkout-form').onsubmit=e=>{
  e.preventDefault();if(submitting)return;submitting=true;$('checkout').disabled=true;
  act(async()=>{try{
   if(!paymentReady||!shop.member)throw Error('目前尚未開放此帳號進行付款。');
-  const current=await shop.items();if(!current.length||current.some(p=>!available(p)||(isRegistration(p)&&p.quantity!==1)))throw Error('請確認商品已上架；課程與活動每項數量需為 1。');
+  const current=await shop.items();if(!current.length||current.some(p=>!available(p)||p.quantity>quantityMax(p)))throw Error('請確認商品已上架、人數／數量未超過每筆上限及剩餘名額。');
   const method=chosenMethod();if(!method)throw Error('請選擇適用的付款方式。');const payment=await api.request('payment/create',{requestKey,note:$('order-note').value,registration:validateRegistration(),method});WildRidePayment.submit(payment);
  }finally{submitting=false;await render()}});
 };
